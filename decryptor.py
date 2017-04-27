@@ -47,7 +47,7 @@ class Decryptor(object):
         substitute = match(regex_substitution, message)
 
         if set_cipher:
-            self.data = set_cipher["cipher"].lower()
+            self.data = str(set_cipher["cipher"].lower()).replace("m", "M")
             return 0
 
         if toggle_translate:
@@ -67,17 +67,27 @@ class Decryptor(object):
     def _parse_unknown(self):
         new_data = self.data
         unknown_letters = list()
-        new_data = new_data.replace("m", grey("m"))
+        new_data = new_data.replace("M", grey("M"))
 
         for key in self.key:
             char = key.lower()
             if self.key[key] == "*":
-                if char == "m":
-                    continue
-                new_data = new_data.replace(char, grey(char))
+                # Bug fix for terminal ANSI terminator 'm'
+                # ---- was
+                # if char == "m":
+                #     continue
+                # ---------
+                if char.upper() == "M":
+                    new_data = new_data.replace(char.upper(), grey(char.upper()))
+                else:
+                    new_data = new_data.replace(char, grey(char))
             else:
                 dec_char = self.key[key]
-                new_data = new_data.replace(char, green(dec_char))
+                # Same as above bugfix but no conditional was here
+                if char.upper() == "M":
+                    new_data = new_data.replace(char.upper(), green(dec_char.upper()))
+                else:
+                    new_data = new_data.replace(char, green(dec_char))
         return new_data
 
     def _round(self):
@@ -109,4 +119,3 @@ class Decryptor(object):
 
 if __name__ == "__main__":
     dec = Decryptor()
-
